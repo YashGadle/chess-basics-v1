@@ -1,0 +1,6 @@
+gizeh==0.1.11
+graphviz==0.21
+matplotlib==3.9.4
+moviepy==2.2.1
+neat_python==0.92
+numpy==2.0.2
