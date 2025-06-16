@@ -1,10 +1,10 @@
 from typing import List, Optional, Tuple
 import sys
 
-from piece import Piece, Position
-from utils.coordinates_to_notations import coordinates_to_notations
-from utils.parse_fen import parse_fen, ParsedFEN
-from utils.default_board_state import make_default_state
+from .piece import Piece, Position
+from .utils.coordinates_to_notations import coordinates_to_notations
+from .utils.parse_fen import parse_fen, ParsedFEN
+from .utils.default_board_state import make_default_state
 
 Position = Tuple[int, int]
 
@@ -24,6 +24,7 @@ class Board:
   num_col = 8
 
   def __init__(self, parsed_board: Optional[ParsedFEN] = None):
+    self.num_moves = 0
     if parsed_board:
       self.state: List[List[Cell]] = []
       for row_index, row in enumerate(parsed_board['board']):
@@ -44,6 +45,18 @@ class Board:
 
   def get_board_state(self) -> List[List[Cell]]:
     return self.state
+  
+  def get_board_state_nn(self) -> List[List[Optional[str]]]:
+    board_state = []
+    for row in self.state:
+      board_row = []
+      for cell in row:
+        if cell.piece is None:
+          board_row.append(None)
+        else:
+          board_row.append(coordinates_to_notations(cell.piece.type, cell.piece.color))
+      board_state.append(board_row)
+    return board_state
 
   def render_board(self):
     for i in range(Board.num_row):
@@ -62,7 +75,7 @@ class Board:
   ) -> Optional[Piece]:
     from_row, from_col = from_pos
     to_row, to_col = to_pos
-
+    self.num_moves += 1
     if (
       from_row < 0 or from_row >= Board.num_row or
       from_col < 0 or from_col >= Board.num_col or
@@ -76,6 +89,38 @@ class Board:
     self.state[to_row][to_col].piece = piece
     self.state[from_row][from_col].piece = original_piece
     return captured_piece
+  
+  def move_piece_nn(self, action: List[int]) -> Optional[Piece]:
+    from_row, from_col, to_row, to_col = action
+    if not (0 <= from_row < Board.num_row and 0 <= from_col < Board.num_col and
+            0 <= to_row < Board.num_row and 0 <= to_col < Board.num_col):
+      print("Invalid move coordinates")
+      return None
+
+    piece = self.state[from_row][from_col].piece
+    if piece is None:
+      print("No piece at the source position")
+      return None
+    
+    return self.move_piece((from_row, from_col), (to_row, to_col), piece)
+    
+  def calculate_fitness(self, action: List[int]) -> bool:
+    from_row, from_col, to_row, to_col = action
+    if not (0 <= from_row < Board.num_row and 0 <= from_col < Board.num_col and
+            0 <= to_row < Board.num_row and 0 <= to_col < Board.num_col):
+      print("Invalid move coordinates")
+      return 0
+    piece = self.state[from_row][from_col].piece
+    if piece is None:
+      print("No piece at the source position")
+      return 0
+    legal_moves = piece.get_legal_moves(self, check_for_pin=True)
+    if (to_row, to_col) not in legal_moves:
+      print("Move is not legal")
+      return 0
+    else: return 1
+
+    
 
 def setup_chess_board(board: Board):
   board.render_board()

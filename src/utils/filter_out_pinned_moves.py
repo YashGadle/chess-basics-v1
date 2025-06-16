@@ -1,5 +1,5 @@
 from typing import List, Tuple, TYPE_CHECKING
-from legal_moves.king import is_in_check
+from ..legal_moves.king import is_in_check
 
 if TYPE_CHECKING:
     from board import Board

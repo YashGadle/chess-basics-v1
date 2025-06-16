@@ -1,6 +1,6 @@
 def make_default_state():
-  from board import Cell
-  from piece import Piece
+  from ..board import Cell
+  from ..piece import Piece
   return [
     [
       Cell(Piece("r", "b", (0, 0)), "w"),

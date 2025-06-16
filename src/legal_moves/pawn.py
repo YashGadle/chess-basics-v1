@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from utils.filter_out_pinned_moves import filter_out_pinned_moves
+from ..utils.filter_out_pinned_moves import filter_out_pinned_moves
 
 if TYPE_CHECKING:
     from board import Board

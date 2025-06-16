@@ -6,7 +6,7 @@ import multiprocessing
 import os
 import pickle
 
-import cart_pole
+from src import board
 import neat
 import visualize
 
@@ -17,29 +17,26 @@ simulation_seconds = 60.0
 # Use the NN network phenotype and the discrete actuator force function.
 def eval_genome(genome, config):
     net = neat.nn.FeedForwardNetwork.create(genome, config)
+    
 
     fitnesses = []
 
     for runs in range(runs_per_net):
-        sim = cart_pole.CartPole()
+        sim = board.Board()
 
         # Run the given simulation for up to num_steps time steps.
         fitness = 0.0
-        while sim.t < simulation_seconds:
-            inputs = sim.get_scaled_state()
+        while sim.num_moves < 100:
+            inputs = [item for sublist in sim.get_board_state() for item in sublist]
             action = net.activate(inputs)
+            scaled_action = [round(a * 7) for a in action]
+            
+            sim_fitness = sim.calculate_fitness(scaled_action)
 
             # Apply action to the simulated cart-pole
-            force = cart_pole.discrete_actuator_force(action)
-            sim.step(force)
+            sim.move_piece_nn(scaled_action)
 
-            # Stop if the network fails to keep the cart within the position or angle limits.
-            # The per-run fitness is the number of time steps the network can balance the pole
-            # without exceeding these limits.
-            if abs(sim.x) >= sim.position_limit or abs(sim.theta) >= sim.angle_limit_radians:
-                break
-
-            fitness = sim.t
+            fitness += sim_fitness
 
         fitnesses.append(fitness)
 

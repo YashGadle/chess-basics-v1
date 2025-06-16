@@ -1,10 +1,10 @@
 from typing import List, Tuple, Optional, Literal
-from legal_moves.pawn import all_pawn_moves
-from legal_moves.queen import all_queen_moves
-from legal_moves.knight import all_knight_moves
-from legal_moves.rook import all_rook_moves
-from legal_moves.bishop import all_bishop_moves
-from legal_moves.king import all_king_moves
+from .legal_moves.pawn import all_pawn_moves
+from .legal_moves.queen import all_queen_moves
+from .legal_moves.knight import all_knight_moves
+from .legal_moves.rook import all_rook_moves
+from .legal_moves.bishop import all_bishop_moves
+from .legal_moves.king import all_king_moves
 
 PieceColor = Literal["w", "b"]
 PieceType = Literal["p", "r", "b", "n", "q", "k"]
