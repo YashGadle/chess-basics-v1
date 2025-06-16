@@ -2,46 +2,85 @@
 Single-pole balancing experiment using a feed-forward neural network.
 """
 
+from typing import List
 import multiprocessing
 import os
 import pickle
 
-from src import board
+from src.utils import random_fens
 import neat
 import visualize
+import chess
+
 
 runs_per_net = 5
-simulation_seconds = 60.0
 
+def fen_to_nn_input(board: chess.Board) -> List[int]:
+    piece_encoding = {
+        'p': [0,0,0,0,0,1],
+        'n': [0,0,0,0,1,0],
+        'b': [0,0,0,1,0,0],
+        'r': [0,0,1,0,0,0],
+        'q': [0,1,0,0,0,0],
+        'k': [1,0,0,0,0,0],
+    }
+
+    input_vector = []
+    for square in chess.SQUARES:
+        piece = board.piece_at(square)
+        if piece is None:
+            input_vector.extend([0]*7)
+        else:
+            bits = piece_encoding[piece.symbol().lower()]
+            color_bit = [0] if piece.color == chess.WHITE else [1]
+            input_vector.extend(bits + color_bit)
+
+    return input_vector
+
+def decompress_nn_output(from_square, to_square):
+    from_index = min(max(int(from_square * 63), 0), 63)
+    to_index = min(max(int(to_square * 63), 0), 63)
+    return from_index, to_index
 
 # Use the NN network phenotype and the discrete actuator force function.
 def eval_genome(genome, config):
     net = neat.nn.FeedForwardNetwork.create(genome, config)
-    
 
     fitnesses = []
 
-    for runs in range(runs_per_net):
-        sim = board.Board()
-
-        # Run the given simulation for up to num_steps time steps.
+    for _ in range(runs_per_net):
+        fen = random_fens.get_random_fen()
+        board = chess.Board(fen)
+        
         fitness = 0.0
-        while sim.num_moves < 100:
-            inputs = [item for sublist in sim.get_board_state() for item in sublist]
-            action = net.activate(inputs)
-            scaled_action = [round(a * 7) for a in action]
-            
-            sim_fitness = sim.calculate_fitness(scaled_action)
+        steps = 0
+        
+        while not board.is_game_over() and steps < 10:
+            nn_inputs = fen_to_nn_input(board)
+            output = net.activate(nn_inputs)
 
-            # Apply action to the simulated cart-pole
-            sim.move_piece_nn(scaled_action)
+            from_sq, to_sq = decompress_nn_output(output[0], output[1])
+            move = chess.Move(from_sq, to_sq)
 
-            fitness += sim_fitness
+            if(board.piece_at(from_sq)):
+                fitness += 1  # Reward for finding a piece
+                if move in board.legal_moves:
+                    board.push(move)
+                    print(board, move, move in board.legal_moves)
+                    print("\n")
+                    fitness += 5  # Reward legal move
+                else:
+                    fitness -= 1
+            else:
+                fitness -= 0.5
+               
+
+            steps += 1
 
         fitnesses.append(fitness)
 
     # The genome's fitness is its worst performance across all runs.
-    return min(fitnesses)
+    return sum(fitnesses) / len(fitnesses)
 
 
 def eval_genomes(genomes, config):

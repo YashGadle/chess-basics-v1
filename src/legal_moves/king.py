@@ -5,8 +5,8 @@ if TYPE_CHECKING:
     from piece import Piece
 
 def all_king_moves(piece: 'Piece', board: 'Board') -> List[Tuple[int, int]]:
-    from utils.filter_out_pinned_moves import filter_out_pinned_moves
-    from board import Board
+    from ..utils.filter_out_pinned_moves import filter_out_pinned_moves
+    from ..board import Board
     m, n = piece.position
     moves: List[Tuple[int, int]] = []
     king_moves = [
@@ -45,16 +45,16 @@ def is_in_check(color: str, board: 'Board') -> bool:
     for piece in opponent_pieces:
         if not piece:
             continue
-        legal_moves = piece.get_legal_moves(board, check_pins=False)
+        legal_moves = piece.get_legal_moves(board, check_for_pin=False)
         if any(move[0] == king_x and move[1] == king_y for move in legal_moves):
             return True
     return False
 
 def get_king_position(board: 'Board', color: str) -> Tuple[int, int]:
-    from board import Board
+    from ..board import Board
     for i in range(Board.num_row):
         for j in range(Board.num_col):
             cell = board.get_board_state()[i][j]
             if cell.piece and cell.piece.type == "k" and cell.piece.color == color:
                 return (i, j)
-    raise Exception(f"King of color {color} not found on the board.")
+    raise Exception(f"King of color {color} not found on the board.",)

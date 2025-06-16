@@ -2,15 +2,15 @@ from typing import List, Tuple, TYPE_CHECKING
 from ..utils.filter_out_pinned_moves import filter_out_pinned_moves
 
 if TYPE_CHECKING:
-    from board import Board
-    from piece import Piece
+    from ..board import Board
+    from ..piece import Piece
 
 def all_bishop_moves(
     piece: 'Piece',
     board: 'Board',
     check_for_pin: bool = False
 ) -> List[Tuple[int, int]]:
-    from board import Board
+    from ..board import Board
     moves: List[Tuple[int, int]] = []
     state = board.get_board_state()
     m, n = piece.position

@@ -1,14 +1,14 @@
-from typing import TYPE_CHECKING
+from typing import List, TYPE_CHECKING
 from ..utils.filter_out_pinned_moves import filter_out_pinned_moves
 
 if TYPE_CHECKING:
-    from board import Board
-    from piece import Piece
+    from ..board import Board
+    from ..piece import Piece
 
 def all_pawn_moves(pawn: 'Piece', board: 'Board', check_for_pin: bool = False) -> list[tuple[int, int]]:
-    from board import Board
-    moves: list[tuple[int, int]] = []
+    from ..board import Board
     state = board.get_board_state()
+    moves: list[tuple[int, int]] = []
     m, n = pawn.position
 
     white_pawn_moves: list[tuple[int, int, bool]] = [
