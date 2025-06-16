@@ -9,6 +9,8 @@ import neat
 import chess
 import time
 
+from src.utils import random_fens
+
 # load the winner
 with open('winner-feedforward', 'rb') as f:
     c = pickle.load(f)
@@ -52,8 +54,9 @@ def decode_output(output):
     to_index = min(max(int(round(output[1] * 63)), 0), 63)
     return from_index, to_index
 
-def run_winner(winner_path="winner.pkl", config_path="config-feedforward.txt"):
-    board = chess.Board()
+def run_winner():
+    fen = random_fens.get_random_fen()
+    board = chess.Board(fen)
 
     print("Starting game with best genome...\n")
 
@@ -61,7 +64,7 @@ def run_winner(winner_path="winner.pkl", config_path="config-feedforward.txt"):
         inputs = board_to_nn_input(board)
         output = net.activate(inputs)
         from_idx, to_idx = decode_output(output)
-
+        print(output)
         move = chess.Move(from_idx, to_idx)
 
         if move in board.legal_moves:

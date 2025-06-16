@@ -14,13 +14,13 @@ def is_valid_fen(board: chess.Board) -> bool:
 
     return True
 
-def generate_random_legal_fens(num_positions=100, max_moves=10):
+def generate_random_legal_fens(num_positions=100, max_moves=30):
     fens = set()
     fens.add(chess.Board().fen())  # Always include standard starting position
 
     while len(fens) < num_positions:
         board = chess.Board()
-        for _ in range(random.randint(1, max_moves)):
+        for _ in range(max_moves):
             if board.is_game_over():
                 break
             move = random.choice(list(board.legal_moves))

@@ -11,6 +11,7 @@ from src.utils import random_fens
 import neat
 import visualize
 import chess
+import random
 
 
 runs_per_net = 5
@@ -45,41 +46,50 @@ def decompress_nn_output(from_square, to_square):
 # Use the NN network phenotype and the discrete actuator force function.
 def eval_genome(genome, config):
     net = neat.nn.FeedForwardNetwork.create(genome, config)
-
+    
     fitnesses = []
 
     for _ in range(runs_per_net):
-        fen = random_fens.get_random_fen()
-        board = chess.Board(fen)
-        
         fitness = 0.0
         steps = 0
         
-        while not board.is_game_over() and steps < 10:
+        fen = random_fens.get_random_fen()
+        board = chess.Board(fen)
+        
+        while not board.is_game_over() and steps < 40:
             nn_inputs = fen_to_nn_input(board)
             output = net.activate(nn_inputs)
 
             from_sq, to_sq = decompress_nn_output(output[0], output[1])
             move = chess.Move(from_sq, to_sq)
+            legal_moves = board.legal_moves
+            if board.piece_at(from_sq):
+                piece = board.piece_at(from_sq)
+                fitness += 1  # Found a piece
 
-            if(board.piece_at(from_sq)):
-                fitness += 1  # Reward for finding a piece
-                if move in board.legal_moves:
+                if move in legal_moves:
+                    target = board.piece_at(to_sq)
+                    if target and target.color != piece.color:
+                        fitness += 6  # Captured opponent piece
+                    else:
+                        fitness += 3  # Legal non-capturing move
+
                     board.push(move)
-                    print(board, move, move in board.legal_moves)
-                    print("\n")
-                    fitness += 5  # Reward legal move
                 else:
-                    fitness -= 1
+                    legal = list(legal_moves)
+                    if legal:
+                        board.push(random.choice(legal))
+                    fitness -= 1  # Illegal move
             else:
-                fitness -= 0.5
+                legal = list(legal_moves)
+                if legal:
+                    board.push(random.choice(legal))
+                fitness -= 0.5  # Mild penalty for invalid move
                
-
             steps += 1
 
         fitnesses.append(fitness)
 
-    # The genome's fitness is its worst performance across all runs.
     return sum(fitnesses) / len(fitnesses)
 
 
